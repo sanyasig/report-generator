@@ -13,6 +13,7 @@ public class Trade {
 	private int units;
 	private double unitPrice;
 	private double agreedFx;
+	private double amountUSD;
 	
 	public String getEntity() {
 		return entity;
@@ -67,6 +68,12 @@ public class Trade {
 	}
 	public void setAgreedFx(double agreedFx) {
 		this.agreedFx = agreedFx;
+	}
+	public double getAmountUSD() {
+		return amountUSD;
+	}
+	public void setAmountUSD(double amountUSD) {
+		this.amountUSD = amountUSD;
 	}
 	
 }

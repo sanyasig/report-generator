@@ -1,6 +1,8 @@
 package com.sanyasi.trade_report.generator;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +22,27 @@ public class AmountUSDOutgoing extends ReportItem {
 	@Override
 	public Report genrateReport(ArrayList<Trade> trades) {
 		log.info("Generatiing Amount in USD settled Outgoing everyday for " + trades.size() + " Trades");
-		return null;
+				
+		HashMap<String, Object> dayOutgoingmout = new HashMap<String, Object>();
+		
+		for (Trade trade : trades) {
+			
+			if (trade.isBuy()) {
+				String srDate =  new SimpleDateFormat(DATE_FORMAT).format(trade.getSettlementDate());
+
+				if (!dayOutgoingmout.containsKey(srDate)) {
+					dayOutgoingmout.put(srDate, trade.getAmountUSD());
+				} else {
+					dayOutgoingmout.put(srDate, (Double)dayOutgoingmout.get(srDate) + trade.getAmountUSD());
+				}
+			}
+
+		}
+		
+		return new Report("OutGoing Amount", 
+							"Date", 
+							"Amount(USD)", 
+							dayOutgoingmout);
 	}
 
 }

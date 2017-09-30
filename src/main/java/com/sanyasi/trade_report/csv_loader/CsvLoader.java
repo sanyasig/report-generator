@@ -9,8 +9,12 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.sanyasi.trade_report.RecordParseException;
 import com.sanyasi.trade_report.TradeReportFailedException;
+import com.sanyasi.trade_report.generator.AmountUSDOutgoing;
 import com.sanyasi.trade_report.models.Trade;
 
 import au.com.bytecode.opencsv.CSVParser;
@@ -22,12 +26,16 @@ public class CsvLoader {
 	 * @param csvFilePath : absolute CSV File of trades to generate reports
 	 * @return ArrayList of processed Trades 
 	 */
+	private static final Logger log = LoggerFactory.getLogger(CsvLoader.class);
 	private static final long DAY_MILLI = 24 * 60 * 60 * 1000;
+	private static final String DATE_FORMAT = "dd MMM yyyy";
 	
 	private static HashMap<Integer, String> indexColunmMap = new HashMap<Integer, String>();
 	private static HashMap<String, Integer> headerMap = new HashMap<String, Integer>();
 	
 	public static ArrayList<Trade> loadCSVTrades(String csvFilePath) throws TradeReportFailedException, RecordParseException {
+		
+		log.info("Loading CSV Reports");
 		CSVReader reader;
 		ArrayList<Trade> trades = new ArrayList<Trade>();
 		try {
@@ -38,8 +46,13 @@ public class CsvLoader {
 			String[] record = reader.readNext();
 			
 			while (record != null){
-				trades.add(processTrade(record));
-				record = reader.readNext();
+				try{
+					trades.add(processTrade(record));
+					record = reader.readNext();
+				} catch (NumberFormatException e) {
+					log.error("ERROR Loading Trade CSV File, Exiting Report Generation");
+					record = reader.readNext();
+				}
 			}
 
 			reader.close();
@@ -47,19 +60,26 @@ public class CsvLoader {
 		} catch (IOException e) {
 			throw new TradeReportFailedException("ERROR Loading Trade CSV File, Exiting Report Generation ", e);
 		} 
+		log.info("Done Loading CSV has total of " + trades.size() + "Trades for Reports");
 		return trades;
 	}
 	
 	
 	private static Trade processTrade(String[] record) throws RecordParseException {
-		SimpleDateFormat fmt = new SimpleDateFormat("dd MMM yyyy");
+		SimpleDateFormat fmt = new SimpleDateFormat(DATE_FORMAT);
 		Trade trade = new Trade();
 		try {
-			trade.setAgreedFx(Double.parseDouble(record[headerMap.get("agreedfx")]));
+			
 			String currency = record[headerMap.get("currency")].toLowerCase();
+			double agredFX = Double.parseDouble(record[headerMap.get("agreedfx")]);
+			int units = Integer.parseInt(record[headerMap.get("units")]);
+			double pPUnit = Double.parseDouble(record[headerMap.get("price_per_unit")]);
+			
+			trade.setAgreedFx(agredFX);
 			trade.setCurrency(currency);
-			trade.setUnits(Integer.parseInt(record[headerMap.get("units")]));
-			trade.setUnitPrice(Double.parseDouble(record[headerMap.get("price_per_unit")]));
+			trade.setUnits(units);
+			trade.setUnitPrice(pPUnit);
+			trade.setAmountUSD(agredFX * units * pPUnit);
 			trade.setEntity(record[headerMap.get("entity")]);
 			trade.setInstructionDate(fmt.parse(record[headerMap.get("instructiondate")]));
 			Date origianlSD = fmt.parse(record[headerMap.get("settlementdate")]);
@@ -83,12 +103,13 @@ public class CsvLoader {
 			
 			trade.setSettlementDate(newSD);
 		
-		if(record[headerMap.get("buy/sell")].equalsIgnoreCase("buy"))
+		if(record[headerMap.get("buy/sell")].equalsIgnoreCase("b"))
 			trade.setBuy();
 		else
 			trade.setSell();
 		} catch (ParseException e) {
-			 throw new RecordParseException("Error Proccesing a Trade Record Ignoring it for Report Prodesing", e);
+			log.error("Error Proccesing a Trade Record Ignoring it for Report Prodesing");
+			throw new RecordParseException("Error Proccesing a Trade Record Ignoring it for Report Prodesing", e);
 		}
 	
 		
