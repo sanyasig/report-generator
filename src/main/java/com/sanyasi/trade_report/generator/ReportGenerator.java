@@ -13,7 +13,7 @@ public class ReportGenerator {
 
 	public ArrayList<Report>  generateReport(ArrayList<Trade> trades) {
 		
-		List<? extends ReportItem> reportsToGenerate = Arrays.asList(new AmountUSDIncoming(), 
+		List<? extends ReportItem> reportsToGenerate = Arrays.asList(new AmountUSDIncoming(),
 																	 new AmountUSDOutgoing(),
 																	 new AmountRanking());
 		
@@ -29,6 +29,7 @@ public class ReportGenerator {
 	public String getReportTOPrint(ArrayList<Report> reports) {
 		StringBuffer stringBuffer = new StringBuffer();
 		stringBuffer.append("\n\n");
+		
 		for (Report report : reports){
 			
 			stringBuffer.append("****" + report.getLabel() + "****\n");

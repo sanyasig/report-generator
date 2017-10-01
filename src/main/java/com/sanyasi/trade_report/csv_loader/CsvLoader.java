@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 
 import com.sanyasi.trade_report.RecordParseException;
 import com.sanyasi.trade_report.TradeReportFailedException;
-import com.sanyasi.trade_report.generator.AmountUSDOutgoing;
 import com.sanyasi.trade_report.models.Trade;
 
 import au.com.bytecode.opencsv.CSVParser;
@@ -107,7 +106,7 @@ public class CsvLoader {
 			trade.setBuy();
 		else
 			trade.setSell();
-		} catch (ParseException e) {
+		} catch (ParseException | ArrayIndexOutOfBoundsException e) {
 			log.error("Error Proccesing a Trade Record Ignoring it for Report Prodesing");
 			throw new RecordParseException("Error Proccesing a Trade Record Ignoring it for Report Prodesing", e);
 		}
